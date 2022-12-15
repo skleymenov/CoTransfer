@@ -1,9 +1,9 @@
 databaseChangeLog:
   - include:
-      file: classpath:liquibase/db_changelog/create_table_auto.sql
+      file: src/main/resources/liquibase/db_changelog/create_table_auto.sql
   - include:
-      file: classpath:liquibase/db_changelog/create_table_users.sql
+      file: classpath:src/main/resources/liquibase/db_changelog/create_table_users.sql
   - include:
-      file: classpath:liquibase/db_changelog/create_table_transfers.sql
+      file: classpath:src/main/resources/liquibase/db_changelog/create_table_transfers.sql
   - include:
-      file: classpath:liquibase/db_changelog/create_table_FAQ.sql
+      file: classpath:src/main/resources/liquibase/db_changelog/create_table_FAQ.sql
