@@ -1,4 +1,4 @@
-package com.example.cotransfer.Model;
+package com.example.cotransfer.model;
 
 
 import jakarta.persistence.*;
