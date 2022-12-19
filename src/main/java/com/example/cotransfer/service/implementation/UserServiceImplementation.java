@@ -2,11 +2,13 @@ package com.example.cotransfer.service.implementation;
 
 import com.example.cotransfer.model.Transfer;
 import com.example.cotransfer.model.User;
+import com.example.cotransfer.repository.TransferRepository;
 import com.example.cotransfer.repository.UserRepository;
 import com.example.cotransfer.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,8 @@ import java.util.Optional;
 public class UserServiceImplementation implements UserService {
 
     private final UserRepository userRepository;
+
+    private final TransferRepository transferRepository;
 
     @Override
     public List<User> getAllUsers() {
@@ -58,4 +62,28 @@ public class UserServiceImplementation implements UserService {
         userRepository.save(user);
         log.info("Пользователь с id {} обновлен", user.getId());
     }
+
+    @Override
+    public void createUser(Long transferId, String user) {
+        log.info("Создание пользователя");
+        JSONObject jsonObject = new JSONObject(user);
+        Optional<Transfer> transfer = transferRepository.findById(transferId);
+        User newUser = new User();
+        String name = jsonObject.getString("FCs");
+        List<String> nameList = List.of(name.split(" "));
+        newUser.setName(nameList.get(0));
+        newUser.setLastName(nameList.get(1));
+        newUser.setPatronymic(nameList.get(2));
+        newUser.setArrivalDate(jsonObject.getString("arrivalDate"));
+        newUser.setFlightNumber(jsonObject.getString("flightNumber"));
+        newUser.setPhoneNumber(jsonObject.getString("phoneNumber"));
+        newUser.setEmail(jsonObject.getString("email"));
+        newUser.setTelegramLogin(jsonObject.getString("telegramLogin"));
+        newUser.setTripComment(jsonObject.getString("tripComment"));
+        newUser.setTransfer(transfer.get());
+        userRepository.save(newUser);
+        log.info("Пользователь создан");
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package com.example.cotransfer.model;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ public class User {
     private String patronymic;
 
     @Column(name = "arrival_date")
-    private LocalDateTime arrivalDate;
+    private String arrivalDate;
 
     @Column(name = "flight_number")
     private  String flightNumber;
@@ -41,9 +42,17 @@ public class User {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "passport")
+    private String passport;
+
     @Column(name = "telegram_login")
     private String telegramLogin;
 
     @Column(name = "trip_comment")
     private String tripComment;
+
+    @ManyToOne
+    @JsonBackReference
+    @JoinColumn(name = "transfer_id")
+    private Transfer transfer;
 }

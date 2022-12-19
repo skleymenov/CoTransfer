@@ -1,0 +1,46 @@
+{
+	"info": {
+		"_postman_id": "36dfb93f-00b8-4bee-ab89-76a96d41da43",
+		"name": "Create transfer, user",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "23146110"
+	},
+	"item": [
+		{
+			"name": "Create user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"FCs\" : \"Александ Юдэнко Сергеевич\",\r\n    \"arrivalDate\" : \"2022-11-11\",\r\n    \"flightNumber\" : \"4341\",\r\n    \"phoneNumber\" : \"+7182781821\",\r\n    \"email\" : \"sanya@mail.ru\",\r\n    \"telegramLogin\" : \"@sanya\",\r\n    \"tripComment\" : \"Подъехать ко входу\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/api/v1/users/create-user/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Transfer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"date\" : \"2022-19-11 10:11:12\",\r\n    \"startPlace\" : \"VITEBSk\",\r\n    \"endPlace\" : \"SPB\",\r\n    \"adults\" : \"1\",\r\n    \"children\" : \"1\",\r\n    \"auto\" : \"Седан\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/api/v1/transfers/create"
+			},
+			"response": []
+		}
+	]
+}
