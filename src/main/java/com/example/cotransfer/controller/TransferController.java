@@ -27,9 +27,14 @@ public class TransferController {
         return ResponseEntity.ok(transfer);
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create-transfer-from-airport")
+    private ResponseEntity<?> createTransferFromA(@RequestBody String transfer) {
+        return ResponseEntity.ok(transferService.createTransferFromAirport(transfer));
+    }
+
+    @PostMapping("/create-transfer")
     private ResponseEntity<?> createTransfer(@RequestBody String transfer) {
-        return ResponseEntity.ok(transferService.createTransfer(transfer));
+        return ResponseEntity.ok(transferService.createTransferFromAirport(transfer));
     }
 
 }

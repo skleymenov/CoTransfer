@@ -21,5 +21,5 @@ public interface TransferService {
 
     void update(Transfer transfer);
 
-    ResponseEntity<?> createTransfer(String transfer);
+    ResponseEntity<?> createTransferFromAirport(String transfer);
 }
