@@ -6,5 +6,5 @@ CREATE TABLE Transfers
     end_place VARCHAR(256),
     adults_amount INTEGER,
     children_amount INTEGER ,
-    auto_id BIGINT REFERENCES Auto(id)
+    auto_type varchar(256)
 )

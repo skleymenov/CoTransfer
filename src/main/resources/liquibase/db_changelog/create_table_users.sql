@@ -9,5 +9,7 @@ CREATE TABLE Users
     phone_number VARCHAR(256) NOT NULL,
     email VARCHAR(256),
     telegram_login VARCHAR(256),
-    trip_comment VARCHAR(512)
+    trip_comment VARCHAR(512),
+    passport VARCHAR(256),
+    identification_number BIGINT
 )

@@ -27,14 +27,14 @@ public class TransferController {
         return ResponseEntity.ok(transfer);
     }
 
-    @PostMapping("/create-transfer-from-airport")
-    private ResponseEntity<?> createTransferFromA(@RequestBody String transfer) {
-        return ResponseEntity.ok(transferService.createTransferFromAirport(transfer));
+    @PostMapping("/create-transfer")
+    private ResponseEntity<?> createTransfer(@RequestBody String transfer, @RequestHeader(name = "id") Long id) {
+        return ResponseEntity.ok(transferService.createTransferFromAirport(transfer, id));
     }
 
-    @PostMapping("/create-transfer")
-    private ResponseEntity<?> createTransfer(@RequestBody String transfer) {
-        return ResponseEntity.ok(transferService.createTransferFromAirport(transfer));
+    @PutMapping("/updateTransfer")
+    private ResponseEntity<?> updateTransfer(@RequestBody String transfer, @RequestHeader(name = "id") Long id){
+        return  ResponseEntity.ok(transferService.updateTransfer(transfer, id));
     }
 
 }

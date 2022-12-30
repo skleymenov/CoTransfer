@@ -1,11 +1,13 @@
 package com.example.cotransfer.service.implementation;
 
 import com.example.cotransfer.model.Transfer;
+import com.example.cotransfer.model.TransferUser;
 import com.example.cotransfer.model.User;
 import com.example.cotransfer.repository.TransferRepository;
+import com.example.cotransfer.repository.TransferUserRepository;
 import com.example.cotransfer.repository.UserRepository;
 import com.example.cotransfer.service.TransferService;
-import jakarta.persistence.EntityNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -15,8 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ public class TransferServiceImplementation implements TransferService {
 
     private final TransferRepository transferRepository;
     private final UserRepository userRepository;
+    private final TransferUserRepository transferUserRepository;
 
     @Override
     public Page<Transfer> getAllTransfers(Pageable pageable) {
@@ -67,54 +70,183 @@ public class TransferServiceImplementation implements TransferService {
         log.info("Данные обновлены");
     }
 
-    public ResponseEntity<?> createTransferFromAirport(String transfer) {
+    public ResponseEntity<?> createTransferFromAirport(String transfer, Long id) {
         log.info("Создание трансфера");
 
-        JSONObject jsonObject = new JSONObject(transfer);
+        JSONObject jsonObjectTr = new JSONObject(transfer);
+        JSONObject jsonObject = jsonObjectTr.getJSONObject(("order"));
+
         Transfer newTransfer = new Transfer();
-        User newUser = new User();
-        newTransfer.setTripDate(jsonObject.getString("date"));
-        newTransfer.setStartPlace(jsonObject.getString("startPlace"));
-        newTransfer.setEndPlace(jsonObject.getString("endPlace"));
-        newTransfer.setAdultsAmount(jsonObject.getInt("adults"));
-        newTransfer.setChildrenAmount(jsonObject.getInt("children"));
-        JSONArray jsonArray = jsonObject.getJSONArray("passengers");
 
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject arrayJson = jsonArray.getJSONObject(i);
-            String name = arrayJson.getString("FCs");
-            List<String> nameList = List.of(name.split(" "));
-            newUser.setName(nameList.get(0));
-            newUser.setLastName(nameList.get(1));
-            newUser.setPatronymic(nameList.get(2));
-            newUser.setArrivalDate(arrayJson.getString("arrivalDate"));
-            newUser.setFlightNumber(arrayJson.getString("flightNumber"));
-            newUser.setPhoneNumber(arrayJson.getString("phoneNumber"));
-            newUser.setEmail(arrayJson.getString("email"));
-            newUser.setTelegramLogin(arrayJson.getString("telegramLogin"));
-            newUser.setTripComment(arrayJson.getString("tripComment"));
-            userRepository.save(newUser);
-            log.info("Пользователь создан");
-        }
+        if (jsonObject.getBoolean("pickYouUpFromAirPort")) {
 
-        String autoType = jsonObject.getString("auto");
-        int passengers = jsonObject.getInt("adults") + jsonObject.getInt("children");
+            newTransfer.setTripDate(jsonObject.getString("transferDate") + jsonObject.getString("transferTime"));
+            //newTransfer.setStartPlace(jsonObject.getString("start"));
+            newTransfer.setEndPlace(jsonObject.getString("end"));
+            newTransfer.setAdultsAmount(jsonObject.getInt("adults"));
+            newTransfer.setChildrenAmount((jsonObject.getInt("childrenUnder5") + jsonObject.getInt("childrenAbove5")));
 
-        if (autoType.equals("Vito") && passengers > 0 && passengers < 8) {
-            newTransfer.setAutoType(autoType);
-            transferRepository.save(newTransfer);
-            log.info("Трансфер создан");
-            return ResponseEntity.ok("Трансфер создан, Вы выбрали вито");
+            JSONArray jsonArray = jsonObject.getJSONArray("passengers");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                User newUser = new User();
+                TransferUser transferUser = new TransferUser();
+                JSONObject arrayJson = jsonArray.getJSONObject(i);
+                String name = arrayJson.getString("fullName");
+
+                newUser.setIdentificationNumber(id);
+                newUser.setName(name);
+                newUser.setArrivalDate(arrayJson.getString("departureDate") + " " + arrayJson.getString("departureTime"));
+                //newUser.setFlightNumber(arrayJson.getString("flightNumber"));
+                newUser.setPhoneNumber(String.valueOf(arrayJson.getLong("phoneNumber")));
+                //newUser.setEmail(arrayJson.getString("email"));
+                newUser.setPassport(arrayJson.getString("passportId"));
+                newUser.setTelegramLogin(arrayJson.getString("telegramId"));
+                newUser.setTripComment(arrayJson.getString("transferComment"));
+
+                transferUser.setUserIdentificationNumber(id);
+                transferUser.setTransferId(newTransfer);
+                transferUser.setUserId(newUser);
+
+                userRepository.save(newUser);
+                transferRepository.save(newTransfer);
+                transferUserRepository.save(transferUser);
+
+                log.info("Пользователь создан");
+            }
+
+            String autoType = jsonObject.getString("carType");
+            int passengers = (jsonObject.getInt("adults") + jsonObject.getInt("childrenUnder5") + jsonObject.getInt("childrenAbove5"));
+
+            if (autoType.equals("Vito") && passengers > 0 && passengers < 8) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали вито");
+            } else if (autoType.equals("sedan") && passengers > 0 && passengers < 4) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали Седан");
+            }
+        } else if(!(jsonObject.getBoolean("pickYouUpFromAirPort"))){
+            newTransfer.setTripDate(jsonObject.getString("transferDate") + jsonObject.getString("transferTime"));
+            newTransfer.setStartPlace(jsonObject.getString("start"));
+            newTransfer.setEndPlace(jsonObject.getString("end"));
+            newTransfer.setAdultsAmount((jsonObject.getInt("adults")));
+            newTransfer.setChildrenAmount(jsonObject.getInt("childrenUnder5") + jsonObject.getInt("childrenAbove5"));
+
+            JSONArray jsonArray = jsonObject.getJSONArray("passengers");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                User newUser = new User();
+                TransferUser transferUser = new TransferUser();
+                JSONObject arrayJson = jsonArray.getJSONObject(i);
+                String name = arrayJson.getString("fullName");
+
+                newUser.setIdentificationNumber(id);
+                newUser.setName(name);
+                newUser.setArrivalDate(arrayJson.getString("departureDate") + " " + arrayJson.getString("departureTime"));
+                //newUser.setFlightNumber(arrayJson.getString("flightNumber"));
+                newUser.setPhoneNumber(String.valueOf(arrayJson.getLong("phoneNumber")));
+                //newUser.setEmail(arrayJson.getString("email"));
+                newUser.setPassport(arrayJson.getString("passportId"));
+                newUser.setTelegramLogin(arrayJson.getString("telegramId"));
+                newUser.setTripComment(arrayJson.getString("transferComment"));
+
+                transferUser.setUserIdentificationNumber(id);
+                transferUser.setTransferId(newTransfer);
+                transferUser.setUserId(newUser);
+
+                userRepository.save(newUser);
+                transferRepository.save(newTransfer);
+                transferUserRepository.save(transferUser);
+
+                log.info("Пользователь создан");
+            }
+
+            String autoType = jsonObject.getString("carType");
+            int passengers = (jsonObject.getInt("adults") + jsonObject.getInt("childrenUnder5") + jsonObject.getInt("childrenAbove5"));
+
+            if (autoType.equals("Vito") && passengers > 0 && passengers < 8) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали вито");
+            } else if (autoType.equals("sedan") && passengers > 0 && passengers < 4) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали Седан");
+            }
         }
-        else if (autoType.equals("Седан")&& passengers > 0 && passengers < 4) {
-            newTransfer.setAutoType(autoType);
-            transferRepository.save(newTransfer);
-            log.info("Трансфер создан");
-            return ResponseEntity.ok("Трансфер создан, Вы выбрали Седан");
-        }
-        else
-            return ResponseEntity.status(400).body("Слишком много пассажиров");
+        return  ResponseEntity.ok("Трансфер создан");
     }
 
 
+    @Override
+    public ResponseEntity<?> updateTransfer(String transfer, Long id) {
+        log.info("Обновление трансфера с id:{}", id);
+        List<TransferUser> allTransferUser = transferUserRepository.findAllByUserIdentificationNumber(id);
+
+        List<Transfer> allTransfers = new ArrayList<>();
+
+        for (TransferUser transferUser : allTransferUser) {
+            allTransfers.add(transferUser.getTransferId());
+        }
+        for (Transfer newTransfer : allTransfers) {
+            JSONObject jsonObjectTr = new JSONObject(transfer);
+            JSONObject jsonObject = jsonObjectTr.getJSONObject(("order"));
+
+            newTransfer.setTripDate(jsonObject.getString("date"));
+            newTransfer.setStartPlace(jsonObject.getString("start"));
+            newTransfer.setEndPlace(jsonObject.getString("end"));
+            newTransfer.setAdultsAmount(Integer.valueOf(jsonObject.getString("adults")));
+            newTransfer.setChildrenAmount(Integer.valueOf(jsonObject.getString("childrenUnder5") + jsonObject.getInt("childrenAbove5")));
+
+            JSONArray jsonArray = jsonObject.getJSONArray("passengers");
+
+
+            List<User> userList = userRepository.findAllByIdentificationNumber(id);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                User newUser = userList.get(i);
+                JSONObject arrayJson = jsonArray.getJSONObject(i);
+                String name = arrayJson.getString("fullName");
+                List<String> nameList = List.of(name.split(" "));
+
+                newUser.setIdentificationNumber(id);
+                newUser.setName(nameList.get(0));
+                newUser.setLastName(nameList.get(1));
+                newUser.setPatronymic(nameList.get(2));
+                newUser.setArrivalDate(arrayJson.getString("departureDate") + " " + arrayJson.getString("departureTime"));
+                //newUser.setFlightNumber(arrayJson.getString("flightNumber"));
+                newUser.setPhoneNumber(String.valueOf(arrayJson.getLong("phoneNumber")));
+                //newUser.setEmail(arrayJson.getString("email"));
+                newUser.setPassport(arrayJson.getString("passportId"));
+                newUser.setTelegramLogin(arrayJson.getString("telegramId"));
+                newUser.setTripComment(arrayJson.getString("transferComment"));
+                System.out.println(newUser.getTelegramLogin());
+                userRepository.save(newUser);
+            }
+
+            log.info("Пользователь создан");
+            transferRepository.save(newTransfer);
+            String autoType = jsonObject.getString("carType");
+            int passengers = Integer.parseInt(jsonObject.getString("adults") + jsonObject.getString("childrenUnder5") + jsonObject.getString("childrenAbove5"));
+
+            if (autoType.equals("Vito") && passengers > 0 && passengers < 8) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали вито");
+            } else if (autoType.equals("sedan") && passengers > 0 && passengers < 4) {
+                newTransfer.setAutoType(autoType);
+                transferRepository.save(newTransfer);
+                log.info("Трансфер создан");
+                return ResponseEntity.ok("Трансфер создан, Вы выбрали Седан");
+            } else
+                return ResponseEntity.status(400).body("Слишком много пассажиров");
+        }
+        return ResponseEntity.ok("Трансфер обновлён");
+    }
 }

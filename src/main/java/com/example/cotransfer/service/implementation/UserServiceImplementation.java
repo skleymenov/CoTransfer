@@ -1,18 +1,20 @@
 package com.example.cotransfer.service.implementation;
 
 import com.example.cotransfer.model.Transfer;
+import com.example.cotransfer.model.TransferUser;
 import com.example.cotransfer.model.User;
 import com.example.cotransfer.repository.TransferRepository;
+import com.example.cotransfer.repository.TransferUserRepository;
 import com.example.cotransfer.repository.UserRepository;
 import com.example.cotransfer.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -22,6 +24,8 @@ public class UserServiceImplementation implements UserService {
     private final UserRepository userRepository;
 
     private final TransferRepository transferRepository;
+
+    private final TransferUserRepository transferUserRepository;
 
     @Override
     public List<User> getAllUsers() {
@@ -80,9 +84,25 @@ public class UserServiceImplementation implements UserService {
         newUser.setEmail(jsonObject.getString("email"));
         newUser.setTelegramLogin(jsonObject.getString("telegramLogin"));
         newUser.setTripComment(jsonObject.getString("tripComment"));
-        newUser.setTransfer(transfer.get());
+        newUser.setTransfer((List<Transfer>) transfer.get());
         userRepository.save(newUser);
         log.info("Пользователь создан");
+    }
+
+    @Override
+    public Set<Transfer> getAllUserTransfers(Long id) {
+
+        List<TransferUser> allTransferUser = transferUserRepository.findAllByUserIdentificationNumber(id);
+        List<User> allUsers = userRepository.findAllByIdentificationNumber(id);
+        Set<Transfer> allTransfers = new HashSet<>();
+
+        for (TransferUser transferUser: allTransferUser) {
+            allTransfers.add(transferUser.getTransferId());
+            for (Transfer transfer: allTransfers) {
+                transfer.setUsers(allUsers);
+            }
+        }
+        return allTransfers;
     }
 
 

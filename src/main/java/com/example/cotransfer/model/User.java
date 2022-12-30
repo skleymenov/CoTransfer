@@ -2,12 +2,13 @@ package com.example.cotransfer.model;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -51,8 +52,15 @@ public class User {
     @Column(name = "trip_comment")
     private String tripComment;
 
-    @ManyToOne
+    @Column(name = "identification_number")
+    private Long identificationNumber;
+
+    @ManyToMany(cascade = CascadeType.ALL)
     @JsonBackReference
-    @JoinColumn(name = "transfer_id")
-    private Transfer transfer;
+    @JoinTable(
+            name = "transfer_user",
+            joinColumns = @JoinColumn(name = "transfer_id_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id_id")
+    )
+    private List<Transfer> transfer;
 }
